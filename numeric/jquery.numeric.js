@@ -36,7 +36,7 @@ $.fn.numeric = function(config, callback)
 {
 	if(typeof config === 'boolean')
 	{
-		config = { decimal: config, negative: true, decimalPlaces: -1 };
+		config = { decimal: config, negative: true, decimalPlaces: -1, forceDecimal: true };
 	}
 	config = config || {};
 	// if config.negative undefined, set to true (default is to allow negative numbers)
@@ -47,10 +47,12 @@ $.fn.numeric = function(config, callback)
 	var negative = (config.negative === true) ? true : false;
     // set decimal places
 	var decimalPlaces = (typeof config.decimalPlaces == "undefined") ? -1 : config.decimalPlaces;
+	// force decimal places
+    var forceDecimal = (config.forceDecimal === true) ? true : false;
 	// callback function
 	callback = (typeof(callback) == "function" ? callback : function() {});
 	// set data and methods
-	return this.data("numeric.decimal", decimal).data("numeric.negative", negative).data("numeric.callback", callback).data("numeric.decimalPlaces", decimalPlaces).keypress($.fn.numeric.keypress).keyup($.fn.numeric.keyup).blur($.fn.numeric.blur);
+	return this.data("numeric.decimal", decimal).data("numeric.negative", negative).data("numeric.forceDecimal", forceDecimal).data("numeric.callback", callback).data("numeric.decimalPlaces", decimalPlaces).keypress($.fn.numeric.keypress).keyup($.fn.numeric.keyup).blur($.fn.numeric.blur);
 };
 
 $.fn.numeric.keypress = function(e)
@@ -271,6 +273,16 @@ $.fn.numeric.blur = function()
 	var val = this.value;
 	if(val !== "")
 	{
+		// Forces the decimal places on blur
+		var decimalPlaces = $.data(this, "numeric.decimalPlaces");
+		var forceDecimal = $.data(this, "numeric.forceDecimal");
+		if (forceDecimal && decimal) 
+		{
+			if (decimalPlaces < 1) decimalPlaces = 2;
+			val = parseFloat(val.replace(decimal, '.'));
+			this.value = val.toFixed(decimalPlaces).replace('.', decimal);
+		}
+		
 		var re = new RegExp("^" + (negative?"-?":"") + "\\d+$|^" + (negative?"-?":"") + "\\d*" + decimal + "\\d+$");
 		if(!re.exec(val))
 		{
